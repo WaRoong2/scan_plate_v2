@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -38,6 +39,7 @@ class CameraApp extends StatefulWidget {
 class _CameraAppState extends State<CameraApp> {
   late CameraController controller;
   late Timer _timer;
+  Duration duration = const Duration();
   bool isScanning = true;
   List<Image> icons = [Image.asset("assets/images/pause.png"), Image.asset("assets/images/play.png")];
   int curIcon = 0;
@@ -53,18 +55,19 @@ class _CameraAppState extends State<CameraApp> {
     // 카메라 시작
     initCamera();
     // 타이머 작동
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (Timer timer) {
       captureAndUpload();
     });
   }
 
   // 카메라 시작
   Future<void> initCamera() async {
-    controller = CameraController(_cameras[0], ResolutionPreset.max);
+    controller = CameraController(_cameras[0], ResolutionPreset.low);
     await controller.initialize().then((_) {
       if (!mounted) {
         return;
       }
+      controller.setFlashMode(FlashMode.off);
       setState(() {});
     }).catchError((Object e) {
       if (e is CameraException) {
@@ -95,9 +98,15 @@ class _CameraAppState extends State<CameraApp> {
     // 주소
     final uri = Uri.parse('http://121.137.148.133:5000/test');
     var request = http.MultipartRequest('POST', uri);
+    // 요청 응답 시간 측정 시작
+    final startTime = DateTime.now();
     request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
     print("Image sent");
     var response = await request.send();
+    // 요청 응답 시간 측정 종료
+    final endTime = DateTime.now();
+    duration = endTime.difference(startTime);
+
     temp = await response.stream.bytesToString();
     if (response.statusCode == 200) {
       print("Image scanned successfully!");
@@ -124,7 +133,7 @@ class _CameraAppState extends State<CameraApp> {
 
   // 타이머 작동
   void restart() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 500), (Timer timer) {
       captureAndUpload();
     });
   }
@@ -141,7 +150,7 @@ class _CameraAppState extends State<CameraApp> {
             children: [
               const SizedBox(height: 35),
               Expanded(
-                flex: 20,
+                flex: 12,
                   child: CameraPreview(
                     controller,
                     child: GestureDetector(onTapDown: (TapDownDetails details) {
@@ -159,9 +168,13 @@ class _CameraAppState extends State<CameraApp> {
                     },),
                   )
               ),
-              Expanded(flex:2, child: Padding(
+              Expanded(flex:1, child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(scanResult, style: const TextStyle(fontSize: 40),),
+                child: Text(scanResult, style: const TextStyle(fontSize: 30),),
+              )),
+              Expanded(flex:1, child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(duration.inMilliseconds.toString(), style: const TextStyle(fontSize: 30),),
               )),
               Expanded(
                 flex:3,
