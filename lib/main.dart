@@ -134,7 +134,7 @@ class _CameraAppState extends State<CameraApp> {
 
   // 타이머 작동
   void restart() {
-    _timer = Timer.periodic(const Duration(milliseconds: 500), (Timer timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 300), (Timer timer) {
       captureAndUpload();
     });
   }
