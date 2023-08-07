@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 
@@ -62,7 +63,7 @@ class _CameraAppState extends State<CameraApp> {
 
   // 카메라 시작
   Future<void> initCamera() async {
-    controller = CameraController(_cameras[0], ResolutionPreset.low);
+    controller = CameraController(_cameras[0], ResolutionPreset.medium);
     await controller.initialize().then((_) {
       if (!mounted) {
         return;
@@ -107,7 +108,7 @@ class _CameraAppState extends State<CameraApp> {
     final endTime = DateTime.now();
     duration = endTime.difference(startTime);
 
-    temp = await response.stream.bytesToString();
+    temp = jsonDecode(await response.stream.bytesToString())["carnumber"];
     if (response.statusCode == 200) {
       print("Image scanned successfully!");
       setState(() {
